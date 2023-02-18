@@ -1,109 +1,82 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <title>HY ChatGPT</title>
-</head>
-<body>
-  <h1>HY ChatGPT</h1>
-  <form>
-    <label for="question">Ask me anything:</label><br>
-    <input type="text" id="question" name="question" size="50"><br><br>
-    <button type="button" onclick="askQuestion()">Submit</button>
-  </form>
-  <div id="response"></div>
-
-  <script>
-    async function askQuestion() {
-      let question = document.getElementById("question").value;
-      let maxTokens = calculateMaxTokens(question);
-      let temperature = 0.7;
-      let data = { "text": question, "maxTokens": maxTokens, "temperature": temperature };
-      let response = await fetch("https://api.openai.com/v1/engines/davinci-codex/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": "Bearer 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" },
-        body: JSON.stringify(data)
-      });
-      let result = await response.json();
-      let answer = result.choices[0].text.trim();
-      document.getElementById("response").innerHTML = answer;
-    }
-
-    function calculateMaxTokens(question) {
-      let questionLength = question.length;
-      if (questionLength < 30) {
-        return 50;
-      } else if (questionLength < 60) {
-        return 75;
-      } else if (questionLength < 90) {
-        return 100;
-      } else {
-        return 125;
-      }
-    }
-  </script>
-</body><!DOCTYPE html>
-<html>
   <head>
-    <meta charset="UTF-8">
-    <title>HY ChatGPT</title>
-    <style>
-      /* 样式表 */
-      #progress {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 2px;
-        background-color: #0077ff;
-        z-index: 9999;
-      }
-    </style>
+    <title>ChatGPT Demo</title>
   </head>
   <body>
-    <h1>HY ChatGPT</h1>
-    <form>
-      <label for="question">Ask me anything:</label><br>
-      <input type="text" id="question" name="question" size="50"><br><br>
-      <button type="button" onclick="askQuestion()">Submit</button>
-    </form>
-    <div id="progress"></div>
-    <div id="response"></div>
+    <h1>ChatGPT Demo</h1>
+    <div id="chatlog"></div>
+    <input id="userinput" type="text">
+    <button id="sendbtn">Send</button>
 
     <script>
-      async function askQuestion() {
-        let question = document.getElementById("question").value;
-        let maxTokens = calculateMaxTokens(question);
-        let temperature = 0.7;
-        let data = { "text": question, "maxTokens": maxTokens, "temperature": temperature };
-        let progress = document.getElementById("progress");
-        progress.style.display = "block";
-        let response = await fetch("https://api.openai.com/v1/engines/davinci-codex/completions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": "Bearer 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" },
-          body: JSON.stringify(data)
-        });
-        let result = await response.json();
-        let answer = result.choices[0].text.trim();
-        progress.style.display = "none";
-        document.getElementById("response").innerHTML = answer;
+      const apiUrl = "https://api.openai.com/v1/engines/davinci-codex/completions";
+      const apiKey = "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";
+
+      const chatlog = document.getElementById("chatlog");
+      const userinput = document.getElementById("userinput");
+      const sendbtn = document.getElementById("sendbtn");
+
+      sendbtn.addEventListener("click", () => {
+        const input = userinput.value;
+        if (input) {
+          addMessage("user", input);
+          userinput.value = "";
+          getChatGPTResponse(input).then((response) => {
+            addMessage("chatbot", response.choices[0].text);
+          });
+        }
+      });
+
+      function addMessage(sender, message) {
+        const msgEl = document.createElement("div");
+        msgEl.classList.add("message", sender);
+        msgEl.innerText = message;
+        chatlog.appendChild(msgEl);
       }
 
-      function calculateMaxTokens(question) {
-        let questionLength = question.length;
-        if (questionLength < 30) {
-          return 50;
-        } else if (questionLength < 60) {
-          return 75;
-        } else if (questionLength < 90) {
-          return 100;
+      async function getChatGPTResponse(input) {
+        const requestBody = {
+          prompt: input,
+          max_tokens: 60,
+          temperature: 0.7,
+        };
+
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify(requestBody),
+        });
+
+        if (response.ok) {
+          return response.json();
         } else {
-          return 125;
+          throw new Error("Failed to get ChatGPT response");
         }
       }
     </script>
-  </body>
-</html>
 
+    <style>
+      .message {
+        margin: 10px 0;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        max-width: 80%;
+      }
+
+      .user {
+        background-color: #def;
+        align-self: flex-start;
+      }
+
+      .chatbot {
+        background-color: #eef;
+        align-self: flex-end;
+      }
+    </style>
+  </body>
 </html>
